@@ -4,8 +4,10 @@
 
 // English version and modifications by George Hazlewood (www.layer1.co.uk)
 // With permission April 2007
+// Added some extra stuff to show actual usage in the emails.
+// Defaults to only sending notification to the postmaster account but switch the config to deliver to the end user too.
 
-error_reporting(2047);
+/* See below for config */
 
 $k = 1024;
 $m = 1048576;
@@ -70,20 +72,33 @@ function dirsize($dir) {
   }
 }
 
+/* CHANGE ME !
+Just change the settings below: 
+*/
+
 define("MAILNAMES", "/var/qmail/mailnames/");
 define("DOMAIN", "example.com");
 define("ACCOUNT", "postmaster");
 define("FROM", ACCOUNT."@".DOMAIN);
 define("RECIPIENT", ACCOUNT."@".DOMAIN);
 
+// Uncomment the line below and users will get an email
+//define("DELIVER_TO_USER",true);
+// Uncomment the line below and the admin will get an email for each mailbox nearing or at the quota limit
+//define("DELIVER_TO_ADMIN",true);
+
+define("LOWER_LIMIT", 90.0); // 90% full - approaching capacity
+define("UPPER_LIMIT", 99.9); // 99.9% full - mailbox full
+
+// You must set these!
 $db_user = 'mailcheck';
 $db_pass = '1234567890';
+/* End of config */
 
 $link = mysql_connect("localhost", $db_user, $db_pass);
 mysql_select_db("psa", $link);
 
 chdir(MAILNAMES);
-#var_dump(ini_get('safe_mode'));
 ini_set('open_basedir', MAILNAMES);
 ini_set('safe_mode',0);
 chdir(MAILNAMES);
@@ -104,10 +119,11 @@ if (mysql_num_rows($result) > 0) {
     $sizemb = round(bytes_to($maildirsize,'MB'),2);
     $quotamb = round(bytes_to($row['mbox_quota'],'MB'),2);
     $o .= $row['mail_name'].'@'.$row['name'].": \t\t\t\tSize: ".$sizemb."MB \tQuota: ".$quotamb."MB \t".round($percentage*100,2)."%\n";
-    if ($percentage>0.9) {
-      $afrondperc=($percentage*100);
-      $afrondperc=round($afrondperc,2);
-        if ($afrondperc>99.9) { 
+    $afrondperc=($percentage*100);
+    $afrondperc=round($afrondperc,2);
+    if ($percentage > LOWER_LIMIT) {
+      
+        if ($afrondperc > UPPER_LIMIT) { 
           $mailto=$row['mail_name']."@".$row['name'];
           $message="Return-Path: <".FROM.">\n";
           $message.="Delivered-To: ".$mailto."\n";
@@ -128,10 +144,14 @@ if (mysql_num_rows($result) > 0) {
           $body.= "(".$afrondperc."% full)\r\n\r\n";
           $body.="This is an automatically generated email.";
           $message .= wordwrap($body,80);
-          //$mailfile=$mailsdir."/new/".$msgid;
-          //file_put_contents($mailfile, $message); 
-          //$admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
-          //file_put_contents($admindir, $message);
+          if (defined(DELIVER_TO_ADMIN)) {
+            $admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
+            file_put_contents($admindir, $message);
+          }
+          if (defined(DELIVER_TO_USER)) {
+              $userdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir/new/".$msgid;
+              file_put_contents($userdir, $message);
+          }
           $full[] = array('mailbox'=>$row['mail_name'].'@'.$row['name'], 'quota'=>$quotamb, 'used'=>$sizemb);
           $num_full++;
         } else {
@@ -156,10 +176,14 @@ if (mysql_num_rows($result) > 0) {
           $body.= "(".$afrondperc."% full)\r\n\r\n";
           $body.="This is an automatically generated email.";
           $message.=wordwrap($body,80);
-          //$mailfile=$mailsdir."/new/".$msgid;
-          //file_put_contents($mailfile, $message); 
-          //$admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
-          //file_put_contents($admindir, $message);
+          if (defined(DELIVER_TO_ADMIN)) {
+            $admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
+            file_put_contents($admindir, $message);
+          }
+          if (defined(DELIVER_TO_USER)) {
+              $userdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir/new/".$msgid;
+              file_put_contents($userdir, $message);
+          }
           $over[] = array('mailbox'=>$row['mail_name'].'@'.$row['name'], 'quota'=>$quotamb, 'used'=>$sizemb);
           $num_over++;
         }
