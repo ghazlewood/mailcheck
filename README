@@ -1,0 +1,8 @@
+This script should be run with cron, either daily or weekly, perhaps something like this:
+
+!#/bin/sh
+# Checks sizes of all mailboxes (approaching and over quota)
+php -d open_basedir=/var/qmail/mailnames -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck.php
+
+It currently produces a summary of mailboxes above a certain percentage or over quota which is emailed to an administrator, 
+but can also directly add messages into mailboxes to warn users. Ramon's original version dropped messages but I wanted a quieter version
