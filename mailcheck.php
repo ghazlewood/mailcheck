@@ -107,7 +107,11 @@ chdir(MAILNAMES);
 #var_dump(is_dir(MAILNAMES)) . "\n";
 echo mysql_error($link);
 
-$sql="SELECT domains.name, mail.mail_name, mail.mbox_quota FROM mail JOIN domains ON mail.dom_id = domains.id";
+$sql="SELECT domains.name, mail.mail_name, mail.mbox_quota, Limits.value as domain_mbox_quota FROM mail 
+JOIN domains ON mail.dom_id = domains.id 
+JOIN Limits ON domains.limits_id = Limits.id 
+WHERE Limits.limit_name = 'mbox_quota'
+ORDER BY domains.name ASC, mail.mail_name ASC";
 
 $result = mysql_query($sql);
 $o = ''; $num_over = 0; $num_full = 0;
@@ -115,10 +119,18 @@ if (mysql_num_rows($result) > 0) {
   while ($row = mysql_fetch_assoc($result)) {
     $mailsdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir";
     $maildirsize= dirsize($mailsdir);
-    $percentage= $maildirsize / $row['mbox_quota'];
+    if ($row['mbox_quota']=='-1') $row['mbox_quota'] = $row['domain_mbox_quota'];
     $sizemb = round(bytes_to($maildirsize,'MB'),2);
     $quotamb = round(bytes_to($row['mbox_quota'],'MB'),2);
-    $o .= $row['mail_name'].'@'.$row['name'].": \t\t\t\tSize: ".$sizemb."MB \tQuota: ".$quotamb."MB \t".round($percentage*100,2)."%\n";
+    if ($row['mbox_quota']>0) {
+      $percentage = $maildirsize / $row['mbox_quota'];
+      $percentuse = round($percentage*100,2);
+    } else {
+      $percentage = 0;
+      $percentuse = 0;
+    }
+
+    $o .= $row['mail_name'].'@'.$row['name'].": \t\t\t\tSize: ".$sizemb."MB \tQuota: ".$quotamb."MB \t".$percentuse."%\n";
     $afrondperc=($percentage*100);
     $afrondperc=round($afrondperc,2);
     if ($percentage > LOWER_LIMIT) {
