@@ -9,6 +9,8 @@ define("DOMAIN", "example.com");
 define("ACCOUNT", "postmaster");
 define("FROM", ACCOUNT."@".DOMAIN);
 define("RECIPIENT", ACCOUNT."@".DOMAIN);
+define("POPUSER",'popuser');
+define("POPGROUP",'popuser');
 
 // Uncomment the line below and users will get an email
 //define("DELIVER_TO_USER",true);
