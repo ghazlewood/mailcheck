@@ -29,96 +29,54 @@ ORDER BY domains.name ASC, mail.mail_name ASC";
 $result = mysql_query($sql);
 $o = ''; $num_over = 0; $num_full = 0; $totalmailboxes = 0;
 if (mysql_num_rows($result) > 0) {
-  while ($row = mysql_fetch_assoc($result)) {
-    $mailsdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir";
-    $maildirsize= dirsize($mailsdir);
+  while ($mailbox = mysql_fetch_assoc($result)) {
+    $mailbox['maildir_path'] = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir";
+    $mailbox['maildir_size'] = dirsize($mailbox['maildir_path']);
     $totalmailboxes++;
-    if ($row['mbox_quota']=='-1') $row['mbox_quota'] = $row['domain_mbox_quota'];
-    $sizemb = round(bytes_to($maildirsize,'MB'),2);
-    $quotamb = round(bytes_to($row['mbox_quota'],'MB'),2);
-    if ($row['mbox_quota']>0) {
-      $percentage = $maildirsize / $row['mbox_quota'];
+    if ($mailbox['mbox_quota']=='-1') $mailbox['mbox_quota'] = $mailbox['domain_mbox_quota'];
+    $quota = array('sizemb' => round(bytes_to($mailbox['maildir_size'],'MB'),2), 'quotamb' => round(bytes_to($mailbox['mbox_quota'],'MB'),2));
+    if ($mailbox['mbox_quota']>0) {
+      $percentage = $mailbox['maildir_size'] / $mailbox['mbox_quota'];
       $percentuse = round($percentage*100,2);
     } else {
       $percentage = 0;
       $percentuse = 0;
     }
 
-    $o .= $row['mail_name'].'@'.$row['name'].": \t\t\t\tSize: ".$sizemb."MB \tQuota: ".$quotamb."MB \t".$percentuse."%\n";
+    $o .= $mailbox['mail_name'].'@'.$mailbox['name'].": \t\t\t\tSize: ".$quota['sizemb']."MB \tQuota: ".$quota['quotamb']."MB \t".$percentuse."%\n";
     $afrondperc=($percentage*100);
     $afrondperc=round($afrondperc,2);
     if ($percentage > LOWER_LIMIT) {
       
         if ($afrondperc > UPPER_LIMIT) { 
-          $mailto=$row['mail_name']."@".$row['name'];
-          $message="Return-Path: <".FROM.">\n";
-          $message.="Delivered-To: ".$mailto."\n";
-          $message.="Date: ".date("j M Y G:i:s")." +0200\n";
-          $message.="X-Priority: 1\n";
-          $msgid=date("YmdHis").".".rand(10000,99999).".qmail@".DOMAIN;
-          $message.="Message-ID: <".$msgid.">\n";
-          $message.="To: ".$mailto."\n";
-          $message.="Subject: WARNING! \"".$mailto."\" mail delivery failing - mailbox full\n";
-          $message.="From: Mailserver <".FROM.">\n";
-          $message.="\n\n";
-          $body="Dear mail user,\n\n";
-          $body.="Your mailbox has reached maximum capacity, no more email can be delivered to it until some of the existing email is deleted.\n";
-          $body.="To ensure that you can continue to receive email please download or delete some messages immediately using either
-          your regular email client (Outlook, Outlook Express, Entourage etc.) or the webmail client at http://webmail.".$row['name']."\n\n";
-          $body.= "Used:  ".$sizemb."MB\n";
-          $body.= "Quota: ".$quotamb."MB\n";
-          $body.= "(".$afrondperc."% full)\n\n";
-          $body.="This is an automatically generated email.";
-          $message .= wordwrap($body,80);
+          $message = compose_message($row, $afrondperc, $quota, true);
+
           if (defined(DELIVER_TO_ADMIN)) {
-            $admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
-            file_put_contents($admindir, $message);
-            chown($admindir, POPUSER);
-            chgrp($admindir, POPGROUP);
+            $admin_dir = MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
+            add_message_to_maildir($admin_dir, $message);
           }
           if (defined(DELIVER_TO_USER)) {
-            $userdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir/new/".$msgid;
-            file_put_contents($userdir, $message);
-            chown($userdir, POPUSER);
-            chgrp($userdir, POPGROUP);
+            $user_dir = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir/new/".$msgid;
+            add_message_to_maildir($user_dir, $message);
           }
-          $full[] = array('mailbox'=>$row['mail_name'].'@'.$row['name'], 'quota'=>$quotamb, 'used'=>$sizemb);
+          $full[] = array(
+            'mailbox' => $mailbox['mail_name'].'@'.$mailbox['name'], 
+            'quota'=>$quota['quotamb'], 
+            'used'=>$quota['sizemb']
+          );
           $num_full++;
         } else {
-          $mailto=$row['mail_name']."@".$row['name'];
-          $message="Return-Path: <".FROM.">\n";
-          $message.="Delivered-To: ".$mailto."\n";
-          $message.="Date: ".date("j M Y G:i:s")." +0200\n";
-          $message.="X-Priority: 1\n";
-          $msgid=date("YmdHis").".".rand(10000,99999).".qmail@".DOMAIN;             
-          $message.="Message-ID: <".$msgid.">\n";
-          $message.="To: ".$mailto."\n";
-          $subject="WARNING! Mailbox: \"".$mailto."\" mailbox approaching capacity\n";
-          $message .= "Subject: ".$subject;
-          $message.="From: Mailserver <".FROM.">\n";
-          $message.="\n\n";
-          $body="Dear mail user,\n\n";
-          $body.="Your mailbox has reached a capacity of ".$afrondperc."% full.\n";
-          $body.="To ensure that you can continue to receive email please download or delete some messages immediately using either 
-          your regular email client (Outlook, Outlook Express, Entourage etc.) or the webmail client at http://webmail.".$row['name']."\n\n";
-          $body.= "Used:  ".$sizemb."MB\n";
-          $body.= "Quota: ".$quotamb."MB\n"; 
-          $body.= "(".$afrondperc."% full)\n\n";
-          $body.="This is an automatically generated email.";
-          $message.=wordwrap($body,80);
+          $message = compose_message($row, $afrondperc, $quota, false);          
+
           if (defined(DELIVER_TO_ADMIN)) {
-            $admindir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
-            file_put_contents($admindir, $message);
-            chown($admindir, POPUSER);
-            chgrp($admindir, POPGROUP);
+            $admin_dir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
+            add_message_to_maildir($admin_dir, $message);
           }
           if (defined(DELIVER_TO_USER)) {
-            $userdir = MAILNAMES.$row['name']."/".$row['mail_name']."/Maildir/new/".$msgid;
-            file_put_contents($userdir, $message);
-            chown($userdir, POPUSER);
-            chgrp($userdir, POPGROUP);
+            $user_dir = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir/new/".$msgid;
+            add_message_to_maildir($user_dir, $message);
           }
-          $over[] = array('mailbox'=>$row['mail_name'].'@'.$row['name'], 'quota'=>$quotamb, 'used'=>$sizemb);
+          $over[] = array('mailbox'=>$mailbox['mail_name'].'@'.$mailbox['name'], 'quota'=>$quota['quotamb'], 'used'=>$quota['sizemb']);
           $num_over++;
         }
       } 
