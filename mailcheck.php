@@ -20,7 +20,7 @@ chdir(MAILNAMES);
 
 echo mysql_error($link);
 
-$sql="SELECT domains.name, mail.mail_name, mail.mbox_quota, Limits.value as domain_mbox_quota FROM mail 
+$sql="SELECT domains.name, mail.id, mail.mail_name, mail.mbox_quota, Limits.value as domain_mbox_quota FROM mail 
 JOIN domains ON mail.dom_id = domains.id 
 JOIN Limits ON domains.limits_id = Limits.id 
 WHERE Limits.limit_name = 'mbox_quota'
@@ -76,7 +76,20 @@ if (mysql_num_rows($result) > 0) {
             $user_dir = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir/new/".$msgid;
             add_message_to_maildir($user_dir, $message);
           }
-          $over[] = array('mailbox'=>$mailbox['mail_name'].'@'.$mailbox['name'], 'quota'=>$quota['quotamb'], 'used'=>$quota['sizemb']);
+          // Find out if this is a mailbox which also has an active redirect and therefore might also
+          // 
+          $redirect_sql = "SELECT `address` FROM `mail_redir` WHERE `mn_id` = ".$mailbox['id']." LIMIT 1";
+          $redirect_result = mysql_query($redirect_sql);
+          if (mysql_num_rows($redirect_result) > 0) {
+            $redirect_row = mysql_fetch_assoc($redirect_result);
+          }
+
+          $over[] = array(
+            'mailbox'=>$mailbox['mail_name'].'@'.$mailbox['name'], 
+            'quota'=>$quota['quotamb'], 
+            'used'=>$quota['sizemb'], 
+            'redirect'=>$redirect_row['address']
+          );
           $num_over++;
         }
       } 
