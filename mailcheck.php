@@ -27,9 +27,11 @@ WHERE Limits.limit_name = 'mbox_quota'
 ORDER BY domains.name ASC, mail.mail_name ASC";
 
 $result = mysql_query($sql);
-$o = ''; $num_over = 0; $num_full = 0; $totalmailboxes = 0;
+$o = ''; $num_over = 0; $num_full = 0; $totalmailboxes = 0; $unlimited = array();
 if (mysql_num_rows($result) > 0) {
   while ($mailbox = mysql_fetch_assoc($result)) {
+    // Catch unlimited mailboxes
+    if (($mailbox['mbox_quota'] == '-1') && ($mailbox['domain_mbox_quota'] == '-1')) $unlimited[] = array('mailbox' => $mailbox['mail_name'].'@'.$mailbox['name']);
     $mailbox['maildir_path'] = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir";
     $mailbox['maildir_size'] = dirsize($mailbox['maildir_path']);
     $totalmailboxes++;
@@ -121,6 +123,14 @@ if (!empty($num_full)) {
 } else {
   $mess .= "No mailboxes over quota\n";
 }
+
+if (!empty($unlimited)) {
+  $mess .= "The are " . count($unlimited) . " mailboxe(s) without domain or mailbox quota limits: ";
+  foreach($unlimited as $u) {
+    $mess .= $u['mailbox']."\n";
+  }
+}
+
 if (!empty($mess)) {
   mail(RECIPIENT,'Mailbox Quota Summary', $mess);
   //echo $message;
