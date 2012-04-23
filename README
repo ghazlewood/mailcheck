@@ -21,6 +21,6 @@ To Install
 
 	!#/bin/sh
 	# Checks sizes of all mailboxes (approaching and over quota)
-	php -d open_basedir=/var/qmail/mailnames -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck/mailcheck.php
+	php -d open_basedir=/var/qmail/mailnames:/usr/local/psa/admin/htdocs/mailcheck/ -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck/mailcheck.php
 
 

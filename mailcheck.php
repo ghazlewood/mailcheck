@@ -7,8 +7,8 @@
 // Added some extra stuff to show actual usage in the emails.
 // Defaults to only sending notification to the postmaster account but switch the config to deliver to the end user too.
 
-include('mailcheck_lib.inc.php');
-include('mailcheck_config.inc.php');
+include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'mailcheck_lib.inc.php');
+include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'mailcheck_config.inc.php');
 
 $link = mysql_connect("localhost", $db_user, $db_pass);
 mysql_select_db("psa", $link);
