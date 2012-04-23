@@ -1,7 +1,26 @@
-This script should be run with cron, either daily or weekly, perhaps something like this:
+Parallels Plesk Mail Check Script
 
-!#/bin/sh
-# Checks sizes of all mailboxes (approaching and over quota)
-php -d open_basedir=/var/qmail/mailnames -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck.php
+Description
 
-It currently produces a summary of mailboxes above a certain percentage or over quota which is emailed to an administrator, but can also directly add messages into mailboxes to warn users. Ramon's original version dropped messages but I wanted a quieter version
+Produces a summary report of mailboxes above a certain percentage or over quota which is emailed to an 
+administrator, but can also directly add messages into mailboxes to warn users. Ramon's original version
+dropped messages but I wanted a quieter version.
+
+To Install
+1) cd /usr/local/psa/admin/htdocs/
+2) git clone git://github.com/ghazlewood/mailcheck.git
+3) cd mailcheck
+4) TODO rename mailcheck_config.sample.inc.php to mailcheck_config.inc.php
+5) Add user to mysql with something like
+
+	GRANT USAGE ON *.* TO 'mailcheck'@'localhost' IDENTIFIED BY PASSWORD '123456789changeme';
+	GRANT SELECT ON `psa`.* TO 'mailcheck'@'localhost';
+
+6) Customise the domain and postmaster/admin mailbox in mailcheck_config.inc.php
+7) Add a cron.daily/weekly entry as below
+
+	!#/bin/sh
+	# Checks sizes of all mailboxes (approaching and over quota)
+	php -d open_basedir=/var/qmail/mailnames -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck/mailcheck.php
+
+
