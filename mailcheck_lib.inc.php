@@ -97,7 +97,7 @@ function compose_message($mailbox, $percentage, $quota, $over_full_quota) {
   return $message;
 }
 
-function add_message_to_maildir($maildir_dir, $message);
+function add_message_to_maildir($maildir_dir, $message) {
   file_put_contents($maildir_dir, $message);
   chown($maildir_dir, POPUSER);
   chgrp($maildir_dir, POPGROUP);
