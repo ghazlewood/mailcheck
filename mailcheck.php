@@ -45,19 +45,24 @@ if (mysql_num_rows($result) > 0) {
       $percentuse = 0;
     }
 
-    $o .= $mailbox['mail_name'].'@'.$mailbox['name'].": \t\t\t\tSize: ".$quota['sizemb']."MB \tQuota: ".$quota['quotamb']."MB \t".$percentuse."%\n";
+    $report[] = array(
+      'email' => $mailbox['mail_name'].'@'.$mailbox['name'],
+      'size' => $quota['sizemb'],
+      'quota' =>$quota['quotamb'],
+      'percentuse' => $percentuse
+    );
     $afrondperc=($percentage*100);
     $afrondperc=round($afrondperc,2);
     if ($percentage > LOWER_LIMIT) {
-      
-        if ($afrondperc > UPPER_LIMIT) { 
+
+        if ($afrondperc > UPPER_LIMIT) {
           $message = compose_message($row, $afrondperc, $quota, true);
 
-          if (defined(DELIVER_TO_ADMIN)) {
+          if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir = MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
             add_message_to_maildir($admin_dir, $message);
           }
-          if (defined(DELIVER_TO_USER)) {
+          if (defined(DELIVER_TO_USER) && detect_environment()!='HTTP') {
             $user_dir = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir/new/".$msgid;
             add_message_to_maildir($user_dir, $message);
           }
@@ -68,18 +73,18 @@ if (mysql_num_rows($result) > 0) {
           );
           $num_full++;
         } else {
-          $message = compose_message($row, $afrondperc, $quota, false);          
+          $message = compose_message($row, $afrondperc, $quota, false);
 
-          if (defined(DELIVER_TO_ADMIN)) {
+          if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
             add_message_to_maildir($admin_dir, $message);
           }
-          if (defined(DELIVER_TO_USER)) {
+          if (defined(DELIVER_TO_USER) && detect_environment()!='HTTP') {
             $user_dir = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir/new/".$msgid;
             add_message_to_maildir($user_dir, $message);
           }
           // Find out if this is a mailbox which also has an active redirect and therefore might also
-          // 
+          // fill up without every being emptied
           $redirect_sql = "SELECT `address` FROM `mail_redir` WHERE `mn_id` = ".$mailbox['id']." LIMIT 1";
           $redirect_result = mysql_query($redirect_sql);
           if (mysql_num_rows($redirect_result) > 0) {
@@ -94,7 +99,7 @@ if (mysql_num_rows($result) > 0) {
           );
           $num_over++;
         }
-      } 
+      }
     }
   }
 $e = '';
@@ -111,7 +116,7 @@ if (!empty($num_over)) {
   }
   $mess .= "\n\n";
 } else {
-  $o .= "No mailboxes near quota\n";
+  $mess .= "No mailboxes near quota\n";
 }
 
 if (!empty($num_full)) {
@@ -130,10 +135,16 @@ if (!empty($unlimited)) {
     $mess .= $u['mailbox']."\n";
   }
 }
-
 if (!empty($mess)) {
-  mail(RECIPIENT,'Mailbox Quota Summary', $mess);
-  //echo $message;
+  if (detect_environment()!='HTTP') {
+    mail(RECIPIENT,'Mailbox Quota Summary', $mess);
+    //echo $message;
+  } else {
+    // print report to screen
+    print nl2br($mess);
+    
+  }
+
 }
 
 if (isset($e)) {
