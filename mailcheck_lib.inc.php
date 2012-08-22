@@ -103,4 +103,16 @@ function add_message_to_maildir($maildir_dir, $message) {
   chgrp($maildir_dir, POPGROUP);
 }
 
+function detect_environment() {
+  if (php_sapi_name() == 'cli') {
+    if (isset($_SERVER['TERM'])) {
+      return 'SHELL';
+    } else {
+      return 'CRONTAB';
+    }
+  } else {
+    return 'HTTP';
+  }
+}
+
 ?>
