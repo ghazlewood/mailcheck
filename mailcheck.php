@@ -6,6 +6,7 @@
 // With permission April 2007
 // Added some extra stuff to show actual usage in the emails.
 // Defaults to only sending notification to the postmaster account but switch the config to deliver to the end user too.
+// Control panel reporting inspired by http://www4.atomicorp.com/channels/source/atomic-yum/
 
 include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'mailcheck_lib.inc.php');
 include(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'mailcheck_config.inc.php');
@@ -141,8 +142,41 @@ if (!empty($mess)) {
     //echo $message;
   } else {
     // print report to screen
+    include_once(PRODUCT_ROOT."/admin/plib/modules/pm.php");
+    if (!$session->chkLevel(IS_ADMIN)) {
+      pm_alert(pm_lmsg('__perm_denied').'You must be admin to use this page');
+      go_to_uplevel();
+    }
     print nl2br($mess);
-    
+    print "<table><tr><th>Mailbox</th><th>Size (MB)</th><th>Quota (MB)</th><th>Percent Usage</th></tr>";
+
+    $sort = $_GET['sort'];
+    $order = $_GET['order'];
+    if (empty($order)) $order = 'desc';
+    if (!empty($sort)) {
+      // Obtain a list of columns
+      foreach ($report as $key => $row) {
+        $email[] = $row['email'];
+        $size[] = $row['size'];
+        $percentuse[] = $row['percentuse'];
+        $quota[] = $row['quota'];
+      }
+      $sort = $$sort;
+      switch($order) {
+        case 'asc':
+          $sort_order = 'SORT_ASC';
+          break;
+        case 'desc':
+          $sort_order = 'SORT_DESC';
+          break;
+      }
+      array_multisort($sort, $sort_order, $report);
+    }
+    foreach ($report as $rep_row) {
+      $warning_class = ($rep_row['percentuse'] > LOWER_LIMIT ? 'red' : '');
+      print "<tr class='".$warning_class."''><td>".$rep_row['email']."</td><td>".$rep_row['size']."</td><td>".$rep_row['quota']."</td><td>".$rep_row['percentuse']."%</td></tr>";
+    }
+    print "</table>";
   }
 
 }
