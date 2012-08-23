@@ -51,15 +51,32 @@ function bytes_to($value, $unit) {
   }
 }
 
+/*
+ * When run through the control panel this script will be executed as psaadm,
+ * a user without privs, and therefore unable to do anything on the filesystem
+ * however an entry in the /etc/sudoers file solves that:
+ *
+ * psaadm  ALL = NOPASSWD: /usr/bin/du
+ * "Defaults    requiretty" must also be commented out
+ *
+ */
+
 function dirsize($dir) {
-  $cmd = '/usr/bin/du -bs "'.$dir.'/"';
-  if (is_dir($dir)) {
-     $res = `$cmd`;
-     $res = explode(" ", $res);
-     return $res[0];
+  if (detect_environment()==='HTTP') {
+    $exec = '/usr/bin/sudo /usr/bin/du -bs '.escapeshellcmd($dir).'/';
+    $out = exec($exec);
+    $dirsize = explode(" ", $out);
+    return $dirsize[0];
   } else {
-     echo "Couldn\'t run command: ".$cmd." Not a directory: ".$dir."\n";
-     return 0;
+    $cmd = '/usr/bin/du -bs "'.$dir.'/"';
+    if (is_dir($dir)) {
+       $res = `$cmd`;
+       $res = explode(" ", $res);
+       return $res[0];
+    } else {
+       echo "Couldn\'t run command: ".$cmd." Not a directory: ".$dir."\n";
+       return 0;
+    }
   }
 }
 
