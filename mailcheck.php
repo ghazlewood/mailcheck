@@ -37,7 +37,10 @@ if (mysql_num_rows($result) > 0) {
     $mailbox['maildir_size'] = dirsize($mailbox['maildir_path']);
     $totalmailboxes++;
     if ($mailbox['mbox_quota']=='-1') $mailbox['mbox_quota'] = $mailbox['domain_mbox_quota'];
-    $quota = array('sizemb' => round(bytes_to($mailbox['maildir_size'],'MB'),2), 'quotamb' => round(bytes_to($mailbox['mbox_quota'],'MB'),2));
+    $quota = array(
+      'sizemb' => round(bytes_to($mailbox['maildir_size'],'MB'),2),
+      'quotamb' => round(bytes_to($mailbox['mbox_quota'],'MB'),2)
+    );
     if ($mailbox['mbox_quota']>0) {
       $percentage = $mailbox['maildir_size'] / $mailbox['mbox_quota'];
       $percentuse = round($percentage*100,2);
@@ -50,7 +53,8 @@ if (mysql_num_rows($result) > 0) {
       'email' => $mailbox['mail_name'].'@'.$mailbox['name'],
       'size' => $quota['sizemb'],
       'quota' =>$quota['quotamb'],
-      'percentuse' => $percentuse
+      'percentuse' => $percentuse,
+      'domain' => $mailbox['name']
     );
     $afrondperc=($percentage*100);
     $afrondperc=round($afrondperc,2);
@@ -131,7 +135,7 @@ if (!empty($num_full)) {
 }
 
 if (!empty($unlimited)) {
-  $mess .= "The are " . count($unlimited) . " mailboxe(s) without domain or mailbox quota limits: ";
+  $mess .= "The are " . count($unlimited) . " mailbox(es) without domain or mailbox quota limits: \n";
   foreach($unlimited as $u) {
     $mess .= $u['mailbox']."\n";
   }
@@ -174,7 +178,11 @@ if (!empty($mess)) {
     }
     foreach ($report as $rep_row) {
       $warning_class = ($rep_row['percentuse'] > LOWER_LIMIT ? 'red' : '');
+      if ($rep_row['domain'] != $previous_domain) {
+        print "<tr><td colspan='3'>".$rep_row['domain']."</td></tr>";
+      }
       print "<tr class='".$warning_class."''><td>".$rep_row['email']."</td><td>".$rep_row['size']."</td><td>".$rep_row['quota']."</td><td>".$rep_row['percentuse']."%</td></tr>";
+      $previous_domain = $rep_row['domain'];
     }
     print "</table>";
   }
