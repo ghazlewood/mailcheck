@@ -23,4 +23,15 @@ To Install
 	# Checks sizes of all mailboxes (approaching and over quota)
 	php -d open_basedir=/var/qmail/mailnames:/usr/local/psa/admin/htdocs/mailcheck/ -d safe_mode=0 -f /usr/local/psa/admin/htdocs/mailcheck/mailcheck.php
 
+8) Add the line:
+
+   psaadm  ALL = NOPASSWD: /usr/bin/du
+
+   to your /etc/sudoers file
+   
+9) Make sure /etc/sudoers doesn't contain
+
+   Defaults    requiretty
+
+   If it does it must also be commented out with a #
 
