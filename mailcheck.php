@@ -56,12 +56,11 @@ if (mysql_num_rows($result) > 0) {
       'percentuse' => $percentuse,
       'domain' => $mailbox['name']
     );
-    $afrondperc=($percentage*100);
-    $afrondperc=round($afrondperc,2);
-    if ($percentage > LOWER_LIMIT) {
+    
+    if ($percentuse > LOWER_LIMIT) {
 
-        if ($afrondperc > UPPER_LIMIT) {
-          $message = compose_message($row, $afrondperc, $quota, true);
+        if ($percentuse > UPPER_LIMIT) {
+          $message = compose_message($row, $percentuse, $quota, true);
 
           if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir = MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
@@ -78,7 +77,7 @@ if (mysql_num_rows($result) > 0) {
           );
           $num_full++;
         } else {
-          $message = compose_message($row, $afrondperc, $quota, false);
+          $message = compose_message($row, $percentuse, $quota, false);
 
           if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
@@ -142,7 +141,10 @@ if (!empty($unlimited)) {
 }
 if (!empty($mess)) {
   if (detect_environment()!='HTTP') {
-    mail(RECIPIENT,'Mailbox Quota Summary', $mess);
+    // Only send an email if there are any mailboxes over the limit or quota
+    if ( ($num_over>0) || ($num_full>0) ) {
+      mail(RECIPIENT, 'Mailbox Quota Summary: '.$num_over.' over '.LOWER_LIMIT.'% and '.$num_full.' full mailboxes', $mess);
+    }
     //echo $message;
   } else {
     // print report to screen
