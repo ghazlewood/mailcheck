@@ -82,6 +82,7 @@ function dirsize($dir) {
 
 function compose_message($mailbox, $percentage, $quota, $over_full_quota) {
 
+  $mailto = $mailbox['mail_name']."@".$mailbox['name'];
   if ($over_full_quota) {
     $subject = "WARNING! Mailbox: \"".$mailto."\" mail delivery failing - mailbox full\n";
     $warning = "Your mailbox has reached maximum capacity, no more email can be delivered to it until some of the existing email is deleted.\n";
@@ -91,7 +92,6 @@ function compose_message($mailbox, $percentage, $quota, $over_full_quota) {
     $warning = "Your mailbox has reached a capacity of ".$percentage."% full.\n";
   }
 
-  $mailto = $mailbox['mail_name']."@".$mailbox['name'];
   $message = "Return-Path: <".FROM.">\n";
   $message .= "Delivered-To: ".$mailto."\n";
   $message .= "Date: ".date("j M Y G:i:s")." +0200\n";

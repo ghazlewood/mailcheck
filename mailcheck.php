@@ -56,11 +56,11 @@ if (mysql_num_rows($result) > 0) {
       'percentuse' => $percentuse,
       'domain' => $mailbox['name']
     );
-    
+
     if ($percentuse > LOWER_LIMIT) {
 
         if ($percentuse > UPPER_LIMIT) {
-          $message = compose_message($row, $percentuse, $quota, true);
+          $message = compose_message($mailbox, $percentuse, $quota, true);
 
           if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir = MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
@@ -77,7 +77,7 @@ if (mysql_num_rows($result) > 0) {
           );
           $num_full++;
         } else {
-          $message = compose_message($row, $percentuse, $quota, false);
+          $message = compose_message($mailbox, $percentuse, $quota, false);
 
           if (defined(DELIVER_TO_ADMIN) && detect_environment()!='HTTP') {
             $admin_dir=MAILNAMES.DOMAIN."/".ACCOUNT."/Maildir/new/".$msgid;
@@ -183,7 +183,7 @@ if (!empty($mess)) {
       if ($rep_row['domain'] != $previous_domain) {
         print "<tr><td colspan='3'>".$rep_row['domain']."</td></tr>";
       }
-      print "<tr class='".$warning_class."''><td>".$rep_row['email']."</td><td>".$rep_row['size']."</td><td>".$rep_row['quota']."</td><td>".$rep_row['percentuse']."%</td></tr>";
+      print "<tr class='".$warning_class."'><td>".$rep_row['email']."</td><td>".$rep_row['size']."</td><td>".$rep_row['quota']."</td><td>".$rep_row['percentuse']."%</td></tr>";
       $previous_domain = $rep_row['domain'];
     }
     print "</table>";
