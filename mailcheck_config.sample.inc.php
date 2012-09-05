@@ -12,10 +12,10 @@ define("RECIPIENT", ACCOUNT."@".DOMAIN);
 define("POPUSER",'popuser');
 define("POPGROUP",'popuser');
 
-// Uncomment the line below and users will get an email
-//define("DELIVER_TO_USER",true);
-// Uncomment the line below and the admin will get an email for each mailbox nearing or at the quota limit
-//define("DELIVER_TO_ADMIN",true);
+// Change to true and users will get an email
+define("DELIVER_TO_USER",false);
+// Change to true and the admin will get an email for each mailbox nearing or at the quota limit
+define("DELIVER_TO_ADMIN",false);
 
 define("LOWER_LIMIT", 90.0); // 90% full - approaching capacity
 define("UPPER_LIMIT", 99.9); // 99.9% full - mailbox full
