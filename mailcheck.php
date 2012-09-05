@@ -93,6 +93,8 @@ if (mysql_num_rows($result) > 0) {
           $redirect_result = mysql_query($redirect_sql);
           if (mysql_num_rows($redirect_result) > 0) {
             $redirect_row = mysql_fetch_assoc($redirect_result);
+          } else {
+            $redirect_row['address'] = '';
           }
 
           $over[] = array(
