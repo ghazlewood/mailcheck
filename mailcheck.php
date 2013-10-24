@@ -115,24 +115,22 @@ if ($totalmailboxes>0) {
 }
 
 if (!empty($num_over)) {
-  $mess .= "There are ".$num_over." mailboxes near quota limit\n";
-  $mess .= "Mailboxes Over 90% Full\n\n";
+  $mess .= "There are ".$num_over." mailboxes near quota limit (Over " . LOWER_LIMIT . "% full).\n\n";
   foreach($over as $ov) {
     $mess .= $ov['mailbox']."\t\t\t".$ov['quota']."\t\t\t".$ov['used']."\n";
   }
   $mess .= "\n\n";
 } else {
-  $mess .= "No mailboxes near quota\n";
+  $mess .= "No mailboxes near quota (" . LOWER_LIMIT . "%)\n\n";
 }
 
 if (!empty($num_full)) {
-  $mess .= "There are ".$num_full." mailboxes which are full\n";
-  $mess .= "Full Mailboxes\n\n";
+  $mess .= "There are ".$num_full." mailboxes which are full.\n\n";
   foreach($full as $f) {
     $mess .= $f['mailbox']."\t\t\t".$f['quota']."\t\t\t".$f['used']."\n";
   }
 } else {
-  $mess .= "No mailboxes over quota\n";
+  $mess .= "No mailboxes over quota\n\n";
 }
 
 if (!empty($unlimited)) {
