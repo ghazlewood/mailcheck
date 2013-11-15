@@ -6,6 +6,11 @@ Produces a summary report of mailboxes above a certain percentage or over quota 
 administrator, but can also directly add messages into mailboxes to warn users. Ramon's original version
 dropped messages but I wanted a quieter version.
 
+Compatibility
+
+This script only works with Plesk version up to 11.0.9 due to changes in the way the mailbox quota is stored in Plesk.  
+Plesk 11.5 does not store mailbox quota in the database.
+
 To Install
 1) cd /usr/local/psa/admin/htdocs/
 2) git clone git://github.com/ghazlewood/mailcheck.git
