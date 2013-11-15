@@ -92,4 +92,16 @@ function detect_environment() {
   }
 }
 
-?>
+/* 
+*  Parse the maildirsize file and return the quota in bytes
+*  
+*  $directory = Full path to the users mailbox without a trailing slash
+*
+*/
+
+function read_maildirsize_quota($directory) {
+  $maildirsize = split("\n", file_get_contents($directory . '/maildirsize'));
+  $maildirquota = explode(',', $maildirsize[0]);
+  $maildirquota = rtrim($maildirquota[0], "S");
+  return $maildirquota;
+}
