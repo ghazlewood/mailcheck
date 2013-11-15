@@ -21,20 +21,19 @@ chdir(MAILNAMES);
 
 echo mysql_error($link);
 
-$sql="SELECT domains.name, mail.id, mail.mail_name, mail.mbox_quota, Limits.value as domain_mbox_quota FROM mail 
+$sql="SELECT domains.name, mail.id, mail.mail_name FROM mail 
 JOIN domains ON mail.dom_id = domains.id 
-JOIN Limits ON domains.limits_id = Limits.id 
-WHERE Limits.limit_name = 'mbox_quota'
 ORDER BY domains.name ASC, mail.mail_name ASC";
 
 $result = mysql_query($sql);
 $o = ''; $num_over = 0; $num_full = 0; $totalmailboxes = 0; $unlimited = array();
 if (mysql_num_rows($result) > 0) {
   while ($mailbox = mysql_fetch_assoc($result)) {
-    // Catch unlimited mailboxes
-    if (($mailbox['mbox_quota'] == '-1') && ($mailbox['domain_mbox_quota'] == '-1')) $unlimited[] = array('mailbox' => $mailbox['mail_name'].'@'.$mailbox['name']);
     $mailbox['maildir_path'] = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir";
     $mailbox['maildir_size'] = dirsize($mailbox['maildir_path']);
+    $mailbox['mbox_quota'] = read_maildirsize_quota($mailbox['maildir_path']);
+    // Catch unlimited mailboxes
+    if (($mailbox['mbox_quota'] == '-1') && ($mailbox['domain_mbox_quota'] == '-1')) $unlimited[] = array('mailbox' => $mailbox['mail_name'].'@'.$mailbox['name']);
     $totalmailboxes++;
     if ($mailbox['mbox_quota']=='-1') $mailbox['mbox_quota'] = $mailbox['domain_mbox_quota'];
     $quota = array(
@@ -125,7 +124,7 @@ if (!empty($mess)) {
     if ( ($num_over>0) || ($num_full>0) ) {
       mail(RECIPIENT, 'Mailbox Quota Summary: '.$num_over.' over '.LOWER_LIMIT.'% and '.$num_full.' full mailboxes', $mess);
     }
-    //echo $message;
+    //echo $mess;
   } 
 
 }
