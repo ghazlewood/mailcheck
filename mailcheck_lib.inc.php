@@ -100,8 +100,13 @@ function detect_environment() {
 */
 
 function read_maildirsize_quota($directory) {
-  $maildirsize = split("\n", file_get_contents($directory . '/maildirsize'));
-  $maildirquota = explode(',', $maildirsize[0]);
-  $maildirquota = rtrim($maildirquota[0], "S");
+  $maildirsize_path = $directory . '/maildirsize';
+  if (is_file($maildirsize_path)) {
+    $maildirsize = explode("\n", file_get_contents($maildirsize_path);
+    $maildirquota = explode(',', $maildirsize[0]);
+    $maildirquota = rtrim($maildirquota[0], "S");
+  } else {
+    $maildirquota = -1;
+  }
   return $maildirquota;
 }
