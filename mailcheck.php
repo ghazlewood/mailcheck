@@ -29,6 +29,8 @@ $result = mysql_query($sql);
 $o = ''; $num_over = 0; $num_full = 0; $totalmailboxes = 0; $unlimited = array();
 if (mysql_num_rows($result) > 0) {
   while ($mailbox = mysql_fetch_assoc($result)) {
+    // Plesk sometimes stores mailbox names with uppercase characters but always has them on disk as all lowercase
+    $mailbox['mail_name'] = strtolower($mailbox['mail_name']);
     $mailbox['maildir_path'] = MAILNAMES.$mailbox['name']."/".$mailbox['mail_name']."/Maildir";
     $mailbox['maildir_size'] = dirsize($mailbox['maildir_path']);
     $mailbox['mbox_quota'] = read_maildirsize_quota($mailbox['maildir_path']);
